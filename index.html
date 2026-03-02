@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vatican II Ninja</title>
+    <script src="https://cdn.jsdelivr.net/npm/fuse.js/dist/fuse.js"></script>
+    <style>
+        :root {
+            --ninja-red: #b30000;
+            --ninja-gray: #f8f9fa;
+            --ninja-text: #333;
+        }
+        body { font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; margin: 0; display: flex; flex-direction: column; height: 100vh; color: var(--ninja-text); }
+        
+        /* Top Navigation Bar */
+        header { background: white; border-bottom: 1px solid #ddd; padding: 10px 20px; display: flex; align-items: center; justify-content: space-between; }
+        .logo { color: var(--ninja-red); font-weight: bold; font-size: 1.5rem; text-decoration: none; }
+        
+        /* Layout Container */
+        .container { display: flex; flex: 1; overflow: hidden; }
+        
+        /* Sidebar (Ninja-style filters) */
+        aside { width: 250px; background: var(--ninja-gray); border-right: 1px solid #ddd; padding: 20px; overflow-y: auto; display: none; } /* Hidden on mobile */
+        @media (min-width: 768px) { aside { display: block; } }
+        
+        /* Main Search Area */
+        main { flex: 1; padding: 20px; overflow-y: auto; background: white; }
+        .search-box { width: 100%; max-width: 600px; padding: 12px; font-size: 1.1rem; border: 1px solid #ccc; border-radius: 4px; margin-bottom: 20px; outline: none; }
+        .search-box:focus { border-color: var(--ninja-red); box-shadow: 0 0 5px rgba(179,0,0,0.2); }
+
+        /* Result Cards */
+        .result-item { margin-bottom: 30px; border-bottom: 1px solid #eee; pb: 15px; }
+        .doc-breadcrumb { font-size: 0.85rem; color: #666; margin-bottom: 5px; }
+        .doc-header { color: var(--ninja-red); font-weight: bold; font-size: 1.1rem; text-decoration: none; display: block; margin-bottom: 8px; }
+        .text-content { line-height: 1.6; font-size: 1rem; }
+        .highlight { background: #fff3cd; font-weight: bold; }
+
+        .status { font-size: 0.9rem; color: #888; margin-bottom: 10px; }
+    </style>
+</head>
+<body>
+
+<header>
+    <a href="#" class="logo">Vatican II Ninja</a>
+    <div style="font-size: 0.8rem; color: #999;">A resource for all faithful.</div>
+</header>
+
+<div class="container">
+    <aside>
+        <h3 style="font-size: 1rem; margin-top: 0;">Documents</h3>
+        <div id="doc-list" style="font-size: 0.9rem; line-height: 2;">
+            Loading documents...
+        </div>
+    </aside>
+
+    <main>
+        <div id="status" class="status">Loading documents...</div>
+        <input type="text" id="search" class="search-box" placeholder="Search the Council (e.g., 'laity', 'liturgy', 'missions')..." autofocus>
+        
+        <div id="results">
+            <p style="color: #666;">Start typing to search across all 16 documents.</p>
+        </div>
+    </main>
+</div>
+
+<script>
+    let fuse;
+    let vaticanData = [];
+
+    // 1. Fetch the data you created in Colab
+    fetch('vatican2.json')
+        .then(response => response.json())
+        .then(data => {
+            vaticanData = data;
+            document.getElementById('status').innerText = `${data.length} paragraphs indexed and ready.`;
+            
+            // Populate sidebar list
+            const uniqueDocs = [...new Set(data.map(item => item.doc))];
+            document.getElementById('doc-list').innerHTML = uniqueDocs.map(d => `<div>${d}</div>`).join('');
+
+            // 2. Initialize Search
+            fuse = new Fuse(vaticanData, {
+                keys: ['text', 'doc'],
+                threshold: 0.3,
+                includeMatches: true,
+                minMatchCharLength: 2
+            });
+
+            document.getElementById('search').addEventListener('input', e => doSearch(e.target.value));
+        })
+        .catch(err => {
+            document.getElementById('status').innerText = "Error: Make sure vatican2.json is in the same folder!";
+        });
+
+    function doSearch(query) {
+        const resultsContainer = document.getElementById('results');
+        if (!query || query.length < 2) {
+            resultsContainer.innerHTML = '<p style="color: #666;">Start typing to search...</p>';
+            return;
+        }
+
+        const results = fuse.search(query).slice(0, 30); // Show top 30
+        
+        if (results.length === 0) {
+            resultsContainer.innerHTML = '<p>No matches found.</p>';
+            return;
+        }
+
+        resultsContainer.innerHTML = results.map(r => `
+            <div class="result-item">
+                <div class="doc-breadcrumb">Vatican II Documents » ${r.item.doc}</div>
+                <div class="doc-header">${r.item.doc}</div>
+                <div class="text-content">${r.item.text}</div>
+            </div>
+        `).join('');
+    }
+</script>
+
+</body>
+</html>
