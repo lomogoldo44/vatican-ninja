@@ -64,25 +64,34 @@
         "Lumen Gentium": { abbr: "LG", date: "21 November 1964", title: "Dogmatic Constitution on the Church" },
         "Sacrosanctum Concilium": { abbr: "SC", date: "4 December 1963", title: "Constitution on the Sacred Liturgy" },
         "Gaudium et Spes": { abbr: "GS", date: "7 December 1965", title: "Pastoral Constitution on the Church in the Modern World" },
-        "Unitatis Redintegratio": { abbr: "UR", date: "21 November 1964", title: "Ecumenism" },
-        "Orientalium Ecclesiarum": { abbr: "OE", date: "21 November 1964", title: "Eastern Churches" },
-        "Ad Gentes": { abbr: "AG", date: "7 December 1965", title: "Mission Activity" },
-        "Presbyterorum Ordinis": { abbr: "PO", date: "7 December 1965", title: "Ministry of Priests" },
-        "Apostolicam Actuositatem": { abbr: "AA", date: "18 November 1965", title: "Apostolate of the Laity" },
-        "Optatam Totius": { abbr: "OT", date: "28 October 1965", title: "Priestly Training" },
-        "Perfectae Caritatis": { abbr: "PC", date: "28 October 1965", title: "Religious Life" },
-        "Christus Dominus": { abbr: "CD", date: "28 October 1965", title: "Pastoral Office of Bishops" },
-        "Inter Mirifica": { abbr: "IM", date: "4 December 1963", title: "Social Communications" },
-        "Nostra Aetate": { abbr: "NA", date: "28 October 1965", title: "Non-Christian Religions" },
-        "Dignitatis Humanae": { abbr: "DH", date: "7 December 1965", title: "Religious Freedom" },
-        "Gravissimum Educationis": { abbr: "GE", date: "28 October 1965", title: "Christian Education" }
+        "Unitatis Redintegratio": { abbr: "UR", date: "21 November 1964", title: "Decree on Ecumenism" },
+        "Orientalium Ecclesiarum": { abbr: "OE", date: "21 November 1964", title: "Decree on the Catholic Churches of the Eastern Rite" },
+        "Ad Gentes": { abbr: "AG", date: "7 December 1965", title: "Decree on the Mission Activity of the Church" },
+        "Presbyterorum Ordinis": { abbr: "PO", date: "7 December 1965", title: "Decree on the Ministry and Life of Priests" },
+        "Apostolicam Actuositatem": { abbr: "AA", date: "18 November 1965", title: "Decree on the Apostolate of the Laity" },
+        "Optatam Totius": { abbr: "OT", date: "28 October 1965", title: "Decree on Priestly Training" },
+        "Perfectae Caritatis": { abbr: "PC", date: "28 October 1965", title: "Decree on the Adaptation and Renewal of Religious Life" },
+        "Christus Dominus": { abbr: "CD", date: "28 October 1965", title: "Decree Concerning the Pastoral Office of Bishops" },
+        "Inter Mirifica": { abbr: "IM", date: "4 December 1963", title: "Decree on Social Communications" },
+        "Nostra Aetate": { abbr: "NA", date: "28 October 1965", title: "Declaration on Non-Christian Religions" },
+        "Dignitatis Humanae": { abbr: "DH", date: "7 December 1965", title: "Declaration on Religious Freedom" },
+        "Gravissimum Educationis": { abbr: "GE", date: "28 October 1965", title: "Declaration on Christian Education" }
     };
+
+    // --- THE BEAUTIFIER LOGIC ---
+    // This solves the "cf" and notes problem automatically
+    function beautifyText(text) {
+        return text
+            // 1. Turn (1), (2) into tiny superscripts
+            .replace(/\((\d+)\)/g, '<sup class="footnote">[$1]</sup>')
+            // 2. Turn (cf. ...) and (see ...) into dimmed italic text
+            .replace(/(\((?:cf\.|see).*?\))/gi, '<span class="reference-text">$1</span>');
+    }
 
     async function loadAllData() {
         try {
             const manifestResponse = await fetch('files.json');
-            if (!manifestResponse.ok) throw new Error("Could not find 'files.json'. Make sure it is in the same folder.");
-            
+            if (!manifestResponse.ok) throw new Error("files.json not found");
             const filesToLoad = await manifestResponse.json(); 
             
             for (const file of filesToLoad) {
@@ -90,23 +99,14 @@
                 if (response.ok) {
                     const data = await response.json();
                     masterData = [...masterData, ...data]; 
-                } else {
-                    console.error(`Missing File: ${file} was listed in files.json but is not in the folder.`);
                 }
             }
             
-            if (masterData.length === 0) throw new Error("No data loaded. Check if your JSON files are empty.");
-
             masterData = masterData.map((item, index) => ({ ...item, globalId: index }));
             initUI();
         } catch (error) {
             console.error("Loading error:", error);
-            document.getElementById('results').innerHTML = `
-                <div style="text-align:center; padding:50px; color:#f85149;">
-                    <h3>Data Load Error</h3>
-                    <p>${error.message}</p>
-                    <small>Check the browser console (F12) for more details.</small>
-                </div>`;
+            document.getElementById('results').innerHTML = "Error loading files. Check files.json.";
         }
     }
 
@@ -133,22 +133,14 @@
         applySearchAndFilter();
     }
 
-    function resetSearch() {
-        document.getElementById('searchInput').value = "";
-        document.getElementById('docFilter').value = "ALL";
-        applySearchAndFilter();
-    }
-
     function applySearchAndFilter() {
         const query = document.getElementById('searchInput').value.trim();
         const selectedDoc = document.getElementById('docFilter').value;
-        
         let pool = selectedDoc === "ALL" ? masterData : masterData.filter(d => d.doc === selectedDoc);
 
         let results;
         if (!query) {
-            // FIXED: Show more paragraphs (100) instead of just 20 when viewing a doc
-            results = selectedDoc === "ALL" ? pool.slice(0, 50) : pool.slice(0, 100);
+            results = selectedDoc === "ALL" ? pool.slice(0, 50) : pool;
         } else if (!isNaN(query) && query !== "") {
             results = pool.filter(p => p.text.trim().startsWith(query + ".") || p.text.trim().startsWith(query + " "));
         } else {
@@ -164,25 +156,28 @@
         
         items.forEach(item => {
             const meta = vaticanMeta[item.doc] || { title: item.doc, abbr: "n/a", date: "" };
-            let bodyText = item.text;
+            
+            // Apply the Beautifier here!
+            let displayBody = beautifyText(item.text);
+            
             if (term && isNaN(term)) {
-                bodyText = bodyText.replace(new RegExp(`(${term})`, 'gi'), '<mark>$1</mark>');
+                displayBody = displayBody.replace(new RegExp(`(${term})`, 'gi'), '<mark>$1</mark>');
             }
 
             const card = document.createElement('div');
             card.className = 'result-card';
             
-            // Clean text for attributes to prevent crashing
-            const cleanText = item.text.replace(/'/g, "\\'").replace(/"/g, '&quot;').replace(/`/g, "\\`").replace(/\n/g, ' ');
+            // Clean text for buttons
+            const rawText = item.text.replace(/'/g, "\\'").replace(/"/g, '&quot;');
 
             card.innerHTML = `
                 <span class="official-title">${meta.title}</span>
-                <div class="para-text">${bodyText}</div>
+                <div class="para-text">${displayBody}</div>
                 <div class="actions">
                     <button class="action-btn" onclick="jumpTo(${item.globalId - 1})">← Prev</button>
                     <button class="action-btn" onclick="jumpTo(${item.globalId + 1})">Next →</button>
-                    <button class="action-btn btn-cite" onclick="dbcsCite('${item.doc}', \`${cleanText}\`)">🔗 Copy DBCS Citation</button>
-                    <button class="action-btn btn-pdf" onclick="generateDBCSPDF('${item.doc}', \`${cleanText}\`)">📄 Download PDF</button>
+                    <button class="action-btn btn-cite" onclick="dbcsCite('${item.doc}', \`${rawText}\`)">🔗 Copy Citation</button>
+                    <button class="action-btn btn-pdf" onclick="generateDBCSPDF('${item.doc}', \`${rawText}\`)">📄 PDF</button>
                 </div>
             `;
             container.appendChild(card);
