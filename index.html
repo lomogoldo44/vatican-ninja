@@ -3,12 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lomogoldo Vatican II - DBCS Edition</title>
+    <title>Lomogoldo Vatican II</title>
     <script src="https://cdn.jsdelivr.net/npm/fuse.js/dist/fuse.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
-        :root { --bg: #1e1e1e; --text: #d4d4d4; --sidebar-bg: #252526; --primary: #3794ff; --border: #444; --highlight: #3e3700; }
-        [data-theme="light"] { --bg: #ffffff; --text: #333; --sidebar-bg: #f8f9fa; --primary: #0056b3; --border: #dee2e6; --highlight: #fff9c4; }
+        :root { 
+            --bg: #1e1e1e; --text: #d4d4d4; --sidebar-bg: #252526; 
+            --primary: #3794ff; --border: #444; --highlight: #3e3700; 
+        }
+        [data-theme="light"] { 
+            --bg: #ffffff; --text: #333; --sidebar-bg: #f8f9fa; 
+            --primary: #0056b3; --border: #dee2e6; --highlight: #fff9c4; 
+        }
         body { font-family: -apple-system, sans-serif; margin: 0; display: flex; height: 100vh; background: var(--bg); color: var(--text); overflow: hidden; }
         aside { width: 280px; background: var(--sidebar-bg); border-right: 1px solid var(--border); display: flex; flex-direction: column; padding: 15px; overflow-y: auto; }
         .sidebar-header { font-weight: bold; font-size: 1.1rem; color: var(--primary); margin-bottom: 20px; text-align: center; border-bottom: 2px solid var(--border); padding-bottom: 10px; }
@@ -63,25 +69,17 @@
     let fuse;
     const { jsPDF } = window.jspdf;
 
-    // Registry for DBCS metadata (Acronym and Official Promulgation Dates)
-    const dbcsMeta = {
-        "Dei Verbum": { acronym: "DV", date: "18 November 1965", full: "Dogmatic Constitution on Divine Revelation" },
-        "Lumen Gentium": { acronym: "LG", date: "21 November 1964", full: "Dogmatic Constitution on the Church" },
-        "Sacrosanctum Concilium": { acronym: "SC", date: "4 December 1963", full: "Constitution on the Sacred Liturgy" },
-        "Gaudium et Spes": { acronym: "GS", date: "7 December 1965", full: "Pastoral Constitution on the Church in the Modern World" },
-        "Unitatis Redintegratio": { acronym: "UR", date: "21 November 1964", full: "Decree on Ecumenism" },
-        "Orientalium Ecclesiarum": { acronym: "OE", date: "21 November 1964", full: "Decree on the Catholic Churches of the Eastern Rite" },
-        "Ad Gentes": { acronym: "AG", date: "7 December 1965", full: "Decree on the Mission Activity of the Church" },
-        "Presbyterorum Ordinis": { acronym: "PO", date: "7 December 1965", full: "Decree on the Ministry and Life of Priests" },
-        "Apostolicam Actuositatem": { acronym: "AA", date: "18 November 1965", full: "Decree on the Apostolate of the Laity" },
-        "Optatam Totius": { acronym: "OT", date: "28 October 1965", full: "Decree on Priestly Training" },
-        "Perfectae Caritatis": { acronym: "PC", date: "28 October 1965", full: "Decree on the Adaptation and Renewal of Religious Life" },
-        "Christus Dominus": { acronym: "CD", date: "28 October 1965", full: "Decree Concerning the Pastoral Office of Bishops in the Church" },
-        "Inter Mirifica": { acronym: "IM", date: "4 December 1963", full: "Decree on the Media of Social Communications" },
-        "Nostra Aetate": { acronym: "NA", date: "28 October 1965", full: "Declaration on the Relation of the Church to Non-Christian Religions" },
-        "Dignitatis Humanae": { acronym: "DH", date: "7 December 1965", full: "Declaration on Religious Freedom" },
-        "Gravissimum Educationis": { acronym: "GE", date: "28 October 1965", full: "Declaration on Christian Education" }
-    };
+    // Helper to get Acronym (e.g., Lumen Gentium -> LG)
+    function getAcronym(name) {
+        const mapping = {
+            "Lumen Gentium": "LG", "Dei Verbum": "DV", "Sacrosanctum Concilium": "SC", 
+            "Gaudium et Spes": "GS", "Unitatis Redintegratio": "UR", "Orientalium Ecclesiarum": "OE",
+            "Inter Mirifica": "IM", "Christus Dominus": "CD", "Perfectae Caritatis": "PC",
+            "Optatam Totius": "OT", "Gravissimum Educationis": "GE", "Nostra Aetate": "NA",
+            "Dignitatis Humanae": "DH", "Ad Gentes": "AG", "Presbyterorum Ordinis": "PO", "Apostolicam Actuositatem": "AA"
+        };
+        return mapping[name] || name;
+    }
 
     fetch('vatican2.json')
         .then(res => res.json())
@@ -115,40 +113,31 @@
         document.getElementById('results').scrollTop = 0;
     }
 
-    // DBCS HOUSE STYLE CITATION (Manual Page 10)
-    function copyDBCSCitation(docShortName, text) {
-        const meta = dbcsMeta[docShortName] || { acronym: docShortName, date: "n.d.", full: docShortName };
+    // UPDATED DBCS CITATION STYLE 
+    function copyDBCSCitation(docName, text) {
         const paragraphNum = text.match(/^\d+/)?.[0] || "n.a.";
-        // Format: Authority, Document Name (Acronym) (Date), no. X.
-        const citation = `Vatican II, ${meta.full} (${meta.acronym}) (${meta.date}), no. ${paragraphNum}.`;
-        
+        const acronym = getAcronym(docName);
+        // Format: Vatican II, Document Name (Acronym) (Date), no. X.
+        const citation = `Vatican II, ${docName} (${acronym}) (21 November 1964), no. ${paragraphNum}.`;
         navigator.clipboard.writeText(citation).then(() => {
             alert("DBCS Citation Copied!");
         });
     }
 
-    // PDF GENERATION WITH OFFICIAL TITLE
-    function downloadPDF(docShortName, text) {
-        const meta = dbcsMeta[docShortName] || { acronym: docShortName, date: "", full: docShortName };
+    // IMPROVED PRINT/PDF
+    function downloadPDF(docName, text) {
         const doc = new jsPDF();
-        
-        // Header
         doc.setFont("times", "bold");
-        doc.setFontSize(14);
+        doc.setFontSize(16);
         doc.text("DON BOSCO CENTER OF STUDIES", 105, 20, { align: "center" });
-        
-        // Document Title (Constitution or Decree)
         doc.setFontSize(12);
-        doc.text(meta.full.toUpperCase(), 105, 30, { align: "center" });
+        doc.text(docName.toUpperCase(), 105, 30, { align: "center" });
         doc.setLineWidth(0.5);
         doc.line(20, 35, 190, 35);
-        
-        // Body
         doc.setFont("times", "normal");
         const splitText = doc.splitTextToSize(text, 170);
         doc.text(splitText, 20, 45);
-        
-        doc.save(`${meta.acronym}_Section.pdf`);
+        doc.save(`${docName}_Para.pdf`);
     }
 
     function doSearch() {
@@ -173,7 +162,7 @@
                     <div class="controls">
                         <button class="ctrl-btn" onclick="goToParagraph(${item.id - 1})">← Previous</button>
                         <button class="ctrl-btn" onclick="goToParagraph(${item.id + 1})">Next →</button>
-                        <button class="ctrl-btn copy-btn" onclick="copyDBCSCitation('${item.doc}', \`${item.text.replace(/'/g, "\\'")}\`)">🔗 Copy DBCS Citation</button>
+                        <button class="ctrl-btn copy-btn" onclick="copyDBCSCitation('${item.doc}', \`${item.text.replace(/'/g, "\\'")}\`)">🔗 Copy Citation (DBCS Style)</button>
                         <button class="ctrl-btn pdf-btn" onclick="downloadPDF('${item.doc}', \`${item.text.replace(/'/g, "\\'")}\`)">📄 Download PDF</button>
                     </div>
                 </div>
