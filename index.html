@@ -79,18 +79,36 @@
         "Gravissimum Educationis": { abbr: "GE", date: "28 October 1965", title: "Declaration on Christian Education" }
     };
 
-    fetch('vatican2.json')
-        .then(res => res.json())
-        .then(data => {
-            masterData = data.map((item, index) => ({ ...item, globalId: index }));
-            const uniqueDocs = [...new Set(data.map(d => d.doc))].sort();
-            const sidebar = document.getElementById('doc-list');
-            const select = document.getElementById('docFilter');
+// NEW MANIFEST LOADER
+    async function loadAllData() {
+        try {
+            // 1. Fetch the manifest list (files.json)
+            const manifestResponse = await fetch('files.json');
+            if (!manifestResponse.ok) throw new Error("files.json not found");
+            const filesToLoad = await manifestResponse.json(); 
+            
+            // 2. Loop through and load each file
+            for (const file of filesToLoad) {
+                const response = await fetch(file);
+                if (!response.ok) {
+                    console.warn(`Skipping ${file}: Not found.`);
+                    continue; 
+                }
+                const data = await response.json();
+                masterData = [...masterData, ...data]; 
+            }
+            
+            // 3. Setup IDs and UI
+            masterData = masterData.map((item, index) => ({ ...item, globalId: index }));
+            initUI();
+        } catch (error) {
+            console.error("Loading error:", error);
+            document.getElementById('results').innerHTML = "Error loading files. Check files.json.";
+        }
+    }
 
-            uniqueDocs.forEach(name => {
-                sidebar.innerHTML += `<div class="doc-link" onclick="selectDoc('${name}')">${name}</div>`;
-                select.innerHTML += `<option value="${name}">${name}</option>`;
-            });
+    // This command triggers the process
+    loadAllData();
 
             fuse = new Fuse(masterData, { keys: ['text'], threshold: 0.3 });
             render(masterData.slice(0, 10), "");
