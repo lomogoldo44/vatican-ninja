@@ -59,31 +59,30 @@
     let fuse;
     const { jsPDF } = window.jspdf;
 
-    // OFFICIAL DBCS METADATA FOR CITATIONS AND PDF HEADERS
     const vaticanMeta = {
         "Dei Verbum": { abbr: "DV", date: "18 November 1965", title: "Dogmatic Constitution on Divine Revelation" },
         "Lumen Gentium": { abbr: "LG", date: "21 November 1964", title: "Dogmatic Constitution on the Church" },
         "Sacrosanctum Concilium": { abbr: "SC", date: "4 December 1963", title: "Constitution on the Sacred Liturgy" },
         "Gaudium et Spes": { abbr: "GS", date: "7 December 1965", title: "Pastoral Constitution on the Church in the Modern World" },
-        "Unitatis Redintegratio": { abbr: "UR", date: "21 November 1964", title: "Decree on Ecumenism" },
-        "Orientalium Ecclesiarum": { abbr: "OE", date: "21 November 1964", title: "Decree on the Catholic Churches of the Eastern Rite" },
-        "Ad Gentes": { abbr: "AG", date: "7 December 1965", title: "Decree on the Mission Activity of the Church" },
-        "Presbyterorum Ordinis": { abbr: "PO", date: "7 December 1965", title: "Decree on the Ministry and Life of Priests" },
-        "Apostolicam Actuositatem": { abbr: "AA", date: "18 November 1965", title: "Decree on the Apostolate of the Laity" },
-        "Optatam Totius": { abbr: "OT", date: "28 October 1965", title: "Decree on Priestly Training" },
-        "Perfectae Caritatis": { abbr: "PC", date: "28 October 1965", title: "Decree on the Adaptation and Renewal of Religious Life" },
-        "Christus Dominus": { abbr: "CD", date: "28 October 1965", title: "Decree Concerning the Pastoral Office of Bishops in the Church" },
-        "Inter Mirifica": { abbr: "IM", date: "4 December 1963", title: "Decree on the Media of Social Communications" },
-        "Nostra Aetate": { abbr: "NA", date: "28 October 1965", title: "Declaration on the Relation of the Church to Non-Christian Religions" },
-        "Dignitatis Humanae": { abbr: "DH", date: "7 December 1965", title: "Declaration on Religious Freedom" },
-        "Gravissimum Educationis": { abbr: "GE", date: "28 October 1965", title: "Declaration on Christian Education" }
+        "Unitatis Redintegratio": { abbr: "UR", date: "21 November 1964", title: "Ecumenism" },
+        "Orientalium Ecclesiarum": { abbr: "OE", date: "21 November 1964", title: "Eastern Churches" },
+        "Ad Gentes": { abbr: "AG", date: "7 December 1965", title: "Mission Activity" },
+        "Presbyterorum Ordinis": { abbr: "PO", date: "7 December 1965", title: "Ministry of Priests" },
+        "Apostolicam Actuositatem": { abbr: "AA", date: "18 November 1965", title: "Apostolate of the Laity" },
+        "Optatam Totius": { abbr: "OT", date: "28 October 1965", title: "Priestly Training" },
+        "Perfectae Caritatis": { abbr: "PC", date: "28 October 1965", title: "Religious Life" },
+        "Christus Dominus": { abbr: "CD", date: "28 October 1965", title: "Pastoral Office of Bishops" },
+        "Inter Mirifica": { abbr: "IM", date: "4 December 1963", title: "Social Communications" },
+        "Nostra Aetate": { abbr: "NA", date: "28 October 1965", title: "Non-Christian Religions" },
+        "Dignitatis Humanae": { abbr: "DH", date: "7 December 1965", title: "Religious Freedom" },
+        "Gravissimum Educationis": { abbr: "GE", date: "28 October 1965", title: "Christian Education" }
     };
 
-    // 1. FIXED MANIFEST LOADER
     async function loadAllData() {
         try {
             const manifestResponse = await fetch('files.json');
-            if (!manifestResponse.ok) throw new Error("files.json not found");
+            if (!manifestResponse.ok) throw new Error("Could not find 'files.json'. Make sure it is in the same folder.");
+            
             const filesToLoad = await manifestResponse.json(); 
             
             for (const file of filesToLoad) {
@@ -91,18 +90,26 @@
                 if (response.ok) {
                     const data = await response.json();
                     masterData = [...masterData, ...data]; 
+                } else {
+                    console.error(`Missing File: ${file} was listed in files.json but is not in the folder.`);
                 }
             }
             
+            if (masterData.length === 0) throw new Error("No data loaded. Check if your JSON files are empty.");
+
             masterData = masterData.map((item, index) => ({ ...item, globalId: index }));
             initUI();
         } catch (error) {
             console.error("Loading error:", error);
-            document.getElementById('results').innerHTML = "Error loading files. Check files.json and your console.";
+            document.getElementById('results').innerHTML = `
+                <div style="text-align:center; padding:50px; color:#f85149;">
+                    <h3>Data Load Error</h3>
+                    <p>${error.message}</p>
+                    <small>Check the browser console (F12) for more details.</small>
+                </div>`;
         }
     }
 
-    // 2. INITIALIZE UI (Sidebar and Search)
     function initUI() {
         const uniqueDocs = [...new Set(masterData.map(d => d.doc))].sort();
         const sidebar = document.getElementById('doc-list');
@@ -120,7 +127,6 @@
         applySearchAndFilter(); 
     }
 
-    // 3. FIXED: ADDED THE MISSING FUNCTION HEADER HERE
     function selectDoc(name) {
         document.getElementById('docFilter').value = name;
         document.getElementById('searchInput').value = "";
@@ -141,21 +147,20 @@
 
         let results;
         if (!query) {
-            results = pool.slice(0, 20);
+            // FIXED: Show more paragraphs (100) instead of just 20 when viewing a doc
+            results = selectedDoc === "ALL" ? pool.slice(0, 50) : pool.slice(0, 100);
         } else if (!isNaN(query) && query !== "") {
             results = pool.filter(p => p.text.trim().startsWith(query + ".") || p.text.trim().startsWith(query + " "));
         } else {
             results = fuse.search(query).map(r => r.item);
-            if (selectedDoc !== "ALL") {
-                results = results.filter(r => r.doc === selectedDoc);
-            }
+            if (selectedDoc !== "ALL") results = results.filter(r => r.doc === selectedDoc);
         }
-        render(results.slice(0, 50), query);
+        render(results, query);
     }
 
     function render(items, term) {
         const container = document.getElementById('results');
-        container.innerHTML = items.length ? "" : '<div style="text-align:center; padding:100px; opacity:0.5;">No results found for your search.</div>';
+        container.innerHTML = items.length ? "" : '<div style="text-align:center; padding:100px; opacity:0.5;">No results found.</div>';
         
         items.forEach(item => {
             const meta = vaticanMeta[item.doc] || { title: item.doc, abbr: "n/a", date: "" };
@@ -166,14 +171,18 @@
 
             const card = document.createElement('div');
             card.className = 'result-card';
+            
+            // Clean text for attributes to prevent crashing
+            const cleanText = item.text.replace(/'/g, "\\'").replace(/"/g, '&quot;').replace(/`/g, "\\`").replace(/\n/g, ' ');
+
             card.innerHTML = `
                 <span class="official-title">${meta.title}</span>
                 <div class="para-text">${bodyText}</div>
                 <div class="actions">
                     <button class="action-btn" onclick="jumpTo(${item.globalId - 1})">← Prev</button>
                     <button class="action-btn" onclick="jumpTo(${item.globalId + 1})">Next →</button>
-                    <button class="action-btn btn-cite" onclick="dbcsCite('${item.doc}', \`${item.text.replace(/'/g, "\\'").replace(/"/g, '&quot;')}\`)">🔗 Copy DBCS Citation</button>
-                    <button class="action-btn btn-pdf" onclick="generateDBCSPDF('${item.doc}', \`${item.text.replace(/'/g, "\\'").replace(/"/g, '&quot;')}\`)">📄 Download Document PDF</button>
+                    <button class="action-btn btn-cite" onclick="dbcsCite('${item.doc}', \`${cleanText}\`)">🔗 Copy DBCS Citation</button>
+                    <button class="action-btn btn-pdf" onclick="generateDBCSPDF('${item.doc}', \`${cleanText}\`)">📄 Download PDF</button>
                 </div>
             `;
             container.appendChild(card);
@@ -182,9 +191,7 @@
     }
 
     function jumpTo(idx) {
-        if (idx >= 0 && idx < masterData.length) {
-            render([masterData[idx]], "");
-        }
+        if (idx >= 0 && idx < masterData.length) render([masterData[idx]], "");
     }
 
     function dbcsCite(docKey, text) {
@@ -192,10 +199,7 @@
         const paraMatch = text.match(/^\d+/);
         const paraNum = paraMatch ? paraMatch[0] : "n.a.";
         const citation = `Vatican II, ${meta.title} (${meta.abbr}) (${meta.date}), no. ${paraNum}.`;
-        
-        navigator.clipboard.writeText(citation).then(() => {
-            alert("DBCS Citation Copied!");
-        });
+        navigator.clipboard.writeText(citation).then(() => alert("DBCS Citation Copied!"));
     }
 
     function generateDBCSPDF(docKey, text) {
@@ -212,10 +216,9 @@
         doc.setFontSize(12);
         const splitText = doc.splitTextToSize(text, 170);
         doc.text(splitText, 20, 45);
-        doc.save(`${meta.abbr}_Official_Excerpt.pdf`);
+        doc.save(`${meta.abbr}_Excerpt.pdf`);
     }
 
-    // Start the whole thing
     loadAllData();
 </script>
 </body>
