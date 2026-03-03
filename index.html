@@ -15,40 +15,28 @@
             --bg: #ffffff; --text: #333; --sidebar-bg: #f8f9fa; 
             --primary: #0056b3; --border: #dee2e6; --highlight: #fff9c4; 
         }
-        
         body { font-family: -apple-system, sans-serif; margin: 0; display: flex; height: 100vh; background: var(--bg); color: var(--text); overflow: hidden; }
-        
-        /* SIDEBAR */
         aside { width: 280px; background: var(--sidebar-bg); border-right: 1px solid var(--border); display: flex; flex-direction: column; padding: 15px; overflow-y: auto; }
         .sidebar-header { font-weight: bold; font-size: 1.1rem; color: var(--primary); margin-bottom: 20px; text-align: center; border-bottom: 2px solid var(--border); padding-bottom: 10px; }
         .doc-link { padding: 8px 12px; font-size: 0.85rem; color: var(--text); text-decoration: none; border-radius: 4px; cursor: pointer; margin-bottom: 2px; transition: 0.2s; }
         .doc-link:hover { background: var(--border); }
-        .doc-link.active { background: var(--primary); color: white; }
-
-        /* MAIN CONTENT */
         main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
         .toolbar { padding: 12px 25px; border-bottom: 1px solid var(--border); background: var(--bg); display: flex; gap: 10px; align-items: center; }
         .search-input-group { display: flex; flex: 1; max-width: 700px; border: 1px solid var(--border); border-radius: 4px; overflow: hidden; }
         .doc-select { border: none; background: var(--sidebar-bg); padding: 8px; color: var(--text); font-size: 0.85rem; border-right: 1px solid var(--border); outline: none; width: 180px; }
         .search-box { flex: 1; border: none; padding: 10px 15px; font-size: 1rem; background: var(--bg); color: var(--text); outline: none; }
         .btn { background: var(--primary); color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-size: 0.9rem; }
-
-        .content-scroll { flex: 1; overflow-y: auto; padding: 40px 10%; }
+        .content-scroll { flex: 1; overflow-y: auto; padding: 40px 10%; scroll-behavior: smooth; }
         .result-item { margin-bottom: 40px; line-height: 1.8; padding-bottom: 20px; border-bottom: 1px solid var(--border); }
         .doc-label { font-weight: bold; color: var(--primary); margin-bottom: 10px; display: block; font-size: 0.75rem; text-transform: uppercase; }
         .paragraph-text { font-family: "Georgia", serif; font-size: 1.15rem; text-align: justify; white-space: pre-wrap; }
-
-        /* CONTROLS */
         .controls { margin-top: 20px; display: flex; gap: 8px; flex-wrap: wrap; }
         .ctrl-btn { background: var(--sidebar-bg); border: 1px solid var(--border); color: var(--text); padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 0.8rem; transition: 0.2s; }
         .ctrl-btn:hover { background: var(--primary); color: white; border-color: var(--primary); }
-        
-        /* Special Button Styles */
-        .pdf-btn { border-color: #d32f2f; color: #d32f2f; }
-        .pdf-btn:hover { background: #d32f2f; color: white; }
         .copy-btn { border-color: #2e7d32; color: #2e7d32; }
         .copy-btn:hover { background: #2e7d32; color: white; }
-
+        .pdf-btn { border-color: #d32f2f; color: #d32f2f; }
+        .pdf-btn:hover { background: #d32f2f; color: white; }
         mark { background: var(--highlight); color: inherit; font-weight: bold; }
         @media (max-width: 768px) { aside { display: none; } .content-scroll { padding: 20px; } }
     </style>
@@ -81,7 +69,18 @@
     let fuse;
     const { jsPDF } = window.jspdf;
 
-    // Load Data
+    // Helper to get Acronym (e.g., Lumen Gentium -> LG)
+    function getAcronym(name) {
+        const mapping = {
+            "Lumen Gentium": "LG", "Dei Verbum": "DV", "Sacrosanctum Concilium": "SC", 
+            "Gaudium et Spes": "GS", "Unitatis Redintegratio": "UR", "Orientalium Ecclesiarum": "OE",
+            "Inter Mirifica": "IM", "Christus Dominus": "CD", "Perfectae Caritatis": "PC",
+            "Optatam Totius": "OT", "Gravissimum Educationis": "GE", "Nostra Aetate": "NA",
+            "Dignitatis Humanae": "DH", "Ad Gentes": "AG", "Presbyterorum Ordinis": "PO", "Apostolicam Actuositatem": "AA"
+        };
+        return mapping[name] || name;
+    }
+
     fetch('vatican2.json')
         .then(res => res.json())
         .then(data => {
@@ -94,6 +93,7 @@
                 select.innerHTML += `<option value="${n}">${n}</option>`;
             });
             fuse = new Fuse(fullData, { keys: ['text'], threshold: 0.3 });
+            doSearch();
         });
 
     function loadFullDoc(docName) {
@@ -113,61 +113,48 @@
         document.getElementById('results').scrollTop = 0;
     }
 
-    // PDF GENERATION
+    // UPDATED DBCS CITATION STYLE 
+    function copyDBCSCitation(docName, text) {
+        const paragraphNum = text.match(/^\d+/)?.[0] || "n.a.";
+        const acronym = getAcronym(docName);
+        // Format: Vatican II, Document Name (Acronym) (Date), no. X.
+        const citation = `Vatican II, ${docName} (${acronym}) (21 November 1964), no. ${paragraphNum}.`;
+        navigator.clipboard.writeText(citation).then(() => {
+            alert("DBCS Citation Copied!");
+        });
+    }
+
+    // IMPROVED PRINT/PDF
     function downloadPDF(docName, text) {
         const doc = new jsPDF();
         doc.setFont("times", "bold");
-        doc.setFontSize(18);
-        doc.text("Lomogoldo Vatican II", 105, 20, { align: "center" });
+        doc.setFontSize(16);
+        doc.text("DON BOSCO CENTER OF STUDIES", 105, 20, { align: "center" });
         doc.setFontSize(12);
-        doc.setTextColor(100);
-        doc.text(docName, 105, 30, { align: "center" });
+        doc.text(docName.toUpperCase(), 105, 30, { align: "center" });
+        doc.setLineWidth(0.5);
+        doc.line(20, 35, 190, 35);
         doc.setFont("times", "normal");
-        doc.setTextColor(0);
-        const splitText = doc.splitTextToSize(text, 180);
-        doc.text(splitText, 15, 45);
-        doc.save(`${docName}_Section.pdf`);
-    }
-
-    // COPY CITATION
-    function copyCitation(docName, text) {
-        const paragraphNum = text.split('.')[0];
-        const citation = `${docName}, Paragraph ${paragraphNum} — Source: Lomogoldo Vatican II`;
-        navigator.clipboard.writeText(citation).then(() => {
-            alert("Citation copied to clipboard!");
-        });
+        const splitText = doc.splitTextToSize(text, 170);
+        doc.text(splitText, 20, 45);
+        doc.save(`${docName}_Para.pdf`);
     }
 
     function doSearch() {
         const query = document.getElementById('search').value.trim();
         const docName = document.getElementById('docFilter').value;
         let filtered = docName === "ALL" ? fullData : fullData.filter(i => i.doc === docName);
-
         if (!query) { render(filtered.slice(0, 20), ""); return; }
-
-        let results = [];
-        if (!isNaN(query)) {
-            results = filtered.filter(item => item.text.startsWith(query + ".") || item.text.startsWith(query + " "));
-        } else {
-            results = fuse.search(query).map(r => r.item).slice(0, 30);
-        }
+        let results = isNaN(query) ? fuse.search(query).map(r => r.item).slice(0, 30) : filtered.filter(item => item.text.startsWith(query + ".") || item.text.startsWith(query + " "));
         render(results, query);
     }
 
     function render(items, term) {
         const container = document.getElementById('results');
-        if (items.length === 0) {
-            container.innerHTML = '<p style="text-align:center; color:gray; margin-top:50px;">No exact matches found.</p>';
-            return;
-        }
-
+        if (items.length === 0) { container.innerHTML = '<p style="text-align:center; color:gray; margin-top:50px;">No matches found.</p>'; return; }
         container.innerHTML = items.map(item => {
             let bodyText = item.text;
-            if (term && isNaN(term)) {
-                const regex = new RegExp(`(${term})`, 'gi');
-                bodyText = bodyText.replace(regex, '<mark>$1</mark>');
-            }
-            
+            if (term && isNaN(term)) bodyText = bodyText.replace(new RegExp(`(${term})`, 'gi'), '<mark>$1</mark>');
             return `
                 <div class="result-item">
                     <span class="doc-label">${item.doc}</span>
@@ -175,7 +162,7 @@
                     <div class="controls">
                         <button class="ctrl-btn" onclick="goToParagraph(${item.id - 1})">← Previous</button>
                         <button class="ctrl-btn" onclick="goToParagraph(${item.id + 1})">Next →</button>
-                        <button class="ctrl-btn copy-btn" onclick="copyCitation('${item.doc}', \`${item.text.replace(/'/g, "\\'")}\`)">🔗 Copy Citation</button>
+                        <button class="ctrl-btn copy-btn" onclick="copyDBCSCitation('${item.doc}', \`${item.text.replace(/'/g, "\\'")}\`)">🔗 Copy Citation (DBCS Style)</button>
                         <button class="ctrl-btn pdf-btn" onclick="downloadPDF('${item.doc}', \`${item.text.replace(/'/g, "\\'")}\`)">📄 Download PDF</button>
                     </div>
                 </div>
@@ -184,11 +171,7 @@
     }
 
     function toggleTheme() {
-        if (document.body.hasAttribute('data-theme')) {
-            document.body.removeAttribute('data-theme');
-        } else {
-            document.body.setAttribute('data-theme', 'light');
-        }
+        document.body.hasAttribute('data-theme') ? document.body.removeAttribute('data-theme') : document.body.setAttribute('data-theme', 'light');
     }
 </script>
 </body>
