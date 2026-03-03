@@ -6,64 +6,193 @@
     <title>Vatican II Ninja</title>
     <script src="https://cdn.jsdelivr.net/npm/fuse.js/dist/fuse.js"></script>
     <style>
-        :root { --bg: #ffffff; --text: #2c3e50; --primary: #b30000; --border: #e0e0e0; --card-bg: #ffffff; --sidebar: #f4f4f4; --highlight: #ffeb3b; }
-        [data-theme="dark"] { --bg: #121212; --text: #e0e0e0; --primary: #ffcc00; --border: #333; --card-bg: #1e1e1e; --sidebar: #181818; --highlight: #665200; }
-        
-        body { font-family: "Georgia", serif; margin: 0; background: var(--bg); color: var(--text); display: flex; flex-direction: column; height: 100vh; }
-        
-        header { padding: 12px 25px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; background: var(--bg); z-index: 100; }
-        .logo { font-family: sans-serif; color: var(--primary); font-weight: bold; font-size: 1.4rem; text-decoration: none; cursor: pointer; }
+        /* CanonLaw.Ninja Color Palette & Typography */
+        :root { 
+            --bg: #ffffff; 
+            --text: #333333; 
+            --sidebar-bg: #f8f9fa; 
+            --primary: #0056b3; 
+            --border: #dee2e6; 
+            --highlight: #fff9c4;
+            --accent: #6c757d;
+        }
 
-        .layout { display: flex; flex: 1; overflow: hidden; }
-        
-        aside { width: 280px; border-right: 1px solid var(--border); background: var(--sidebar); overflow-y: auto; padding: 20px; }
-        .doc-link { display: block; padding: 10px; margin-bottom: 4px; border-radius: 5px; text-decoration: none; color: var(--text); font-size: 0.85rem; cursor: pointer; transition: 0.2s; border: 1px solid transparent; }
-        .doc-link:hover { background: var(--primary); color: white; }
+        [data-theme="dark"] { 
+            --bg: #1e1e1e; 
+            --text: #d4d4d4; 
+            --sidebar-bg: #252526; 
+            --primary: #3794ff; 
+            --border: #444444; 
+            --highlight: #3e3700;
+        }
 
-        main { flex: 1; overflow-y: auto; padding: 30px; }
-        
-        /* Enhanced Search Bar */
-        .search-container { max-width: 800px; margin: 0 auto 30px auto; display: flex; gap: 10px; flex-wrap: wrap; }
-        .doc-select { flex: 1; min-width: 200px; padding: 15px; border-radius: 8px; border: 2px solid var(--border); background: var(--bg); color: var(--text); font-size: 1rem; cursor: pointer; outline: none; }
-        .search-box { flex: 2; min-width: 300px; padding: 15px; font-size: 1.1rem; border: 2px solid var(--border); border-radius: 8px; background: var(--bg); color: var(--text); outline: none; }
-        .search-box:focus, .doc-select:focus { border-color: var(--primary); }
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; 
+            margin: 0; 
+            display: flex; 
+            height: 100vh; 
+            background: var(--bg); 
+            color: var(--text);
+            overflow: hidden;
+        }
 
-        .results { max-width: 800px; margin: 0 auto; }
-        .result-card { background: var(--card-bg); padding: 25px; border-radius: 10px; border: 1px solid var(--border); margin-bottom: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-        .doc-header { font-family: sans-serif; font-size: 0.7rem; font-weight: bold; color: var(--primary); text-transform: uppercase; margin-bottom: 15px; }
-        
-        .paragraph-content { line-height: 1.8; font-size: 1.1rem; }
-        
-        /* Word Enhancement (Highlighting) */
-        mark { background: var(--highlight); color: var(--text); padding: 0 2px; border-radius: 3px; font-weight: bold; border-bottom: 2px solid var(--primary); }
+        /* SIDEBAR (Left Navigation) */
+        aside { 
+            width: 260px; 
+            background: var(--sidebar-bg); 
+            border-right: 1px solid var(--border); 
+            display: flex; 
+            flex-direction: column;
+            padding: 15px;
+            overflow-y: auto;
+        }
 
-        .theme-btn { border: 1px solid var(--border); background: none; color: var(--text); padding: 8px 15px; border-radius: 20px; cursor: pointer; }
-        @media (max-width: 768px) { aside { display: none; } .search-container { flex-direction: column; } }
+        .sidebar-header {
+            font-weight: bold;
+            font-size: 1.2rem;
+            color: var(--primary);
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .doc-link {
+            padding: 8px 12px;
+            font-size: 0.9rem;
+            color: var(--text);
+            text-decoration: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-bottom: 2px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .doc-link:hover { background: var(--border); }
+        .doc-link.active { background: var(--primary); color: white; }
+
+        /* MAIN CONTENT AREA (Right) */
+        main { 
+            flex: 1; 
+            display: flex; 
+            flex-direction: column; 
+            overflow: hidden;
+        }
+
+        /* SEARCH TOOLBAR (Top of Main) */
+        .toolbar {
+            padding: 15px 30px;
+            border-bottom: 1px solid var(--border);
+            background: var(--bg);
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .search-input-group {
+            display: flex;
+            flex: 1;
+            max-width: 600px;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .doc-select {
+            border: none;
+            background: var(--sidebar-bg);
+            padding: 8px;
+            color: var(--text);
+            font-size: 0.9rem;
+            border-right: 1px solid var(--border);
+            outline: none;
+            width: 160px;
+        }
+
+        .search-box {
+            flex: 1;
+            border: none;
+            padding: 10px 15px;
+            font-size: 1rem;
+            background: var(--bg);
+            color: var(--text);
+            outline: none;
+        }
+
+        .btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+
+        /* CONTENT RESULTS */
+        .content-scroll {
+            flex: 1;
+            overflow-y: auto;
+            padding: 40px 60px;
+        }
+
+        .result-item {
+            margin-bottom: 30px;
+            line-height: 1.6;
+            max-width: 800px;
+        }
+
+        .canon-label {
+            font-weight: bold;
+            color: var(--primary);
+            margin-bottom: 5px;
+            display: block;
+            font-family: serif;
+            font-size: 1.1rem;
+        }
+
+        .paragraph-text {
+            font-family: "Georgia", "Times New Roman", serif;
+            font-size: 1.15rem;
+            text-align: justify;
+        }
+
+        mark { background: var(--highlight); color: inherit; padding: 0 2px; }
+
+        @media (max-width: 768px) {
+            aside { display: none; }
+            .toolbar { flex-direction: column; align-items: stretch; }
+            .content-scroll { padding: 20px; }
+        }
     </style>
 </head>
 <body>
 
-<header>
-    <div class="logo" onclick="location.reload()">Vatican II Ninja</div>
-    <button class="theme-btn" onclick="toggleTheme()">🌓 Theme</button>
-</header>
+<aside id="sidebar">
+    <div class="sidebar-header">Vatican II Ninja</div>
+    <div id="doc-list"></div>
+    <div style="margin-top:auto; padding-top:20px;">
+        <button class="btn" style="width:100%" onclick="toggleTheme()">Toggle Theme</button>
+    </div>
+</aside>
 
-<div class="layout">
-    <aside id="sidebar-docs">
-        <h4 style="font-family:sans-serif; font-size:0.75rem; color:gray; text-transform:uppercase;">Library</h4>
-    </aside>
-
-    <main>
-        <div class="search-container">
+<main>
+    <div class="toolbar">
+        <div class="search-input-group">
             <select id="docFilter" class="doc-select" onchange="doSearch()">
                 <option value="ALL">All Documents</option>
             </select>
-            <input type="text" id="search" class="search-box" placeholder="Type a word or number..." autofocus oninput="doSearch()">
+            <input type="text" id="search" class="search-box" placeholder="Search word or paragraph number..." oninput="doSearch()">
         </div>
-        
-        <div id="results" class="results"></div>
-    </main>
-</div>
+        <button class="btn" onclick="document.getElementById('search').value=''; doSearch();">Clear</button>
+    </div>
+
+    <div class="content-scroll" id="results">
+        <div style="color:gray; text-align:center; margin-top:100px;">
+            Select a document from the left or type to search.
+        </div>
+    </div>
+</main>
 
 <script>
     let fuse;
@@ -75,7 +204,7 @@
             fullData = data;
             
             const names = [...new Set(data.map(i => i.doc))].sort();
-            const sidebar = document.getElementById('sidebar-docs');
+            const sidebar = document.getElementById('doc-list');
             const select = document.getElementById('docFilter');
 
             names.forEach(n => {
@@ -83,13 +212,17 @@
                 select.innerHTML += `<option value="${n}">${n}</option>`;
             });
 
-            fuse = new Fuse(data, { keys: ['text'], threshold: 0.4, ignoreLocation: true });
+            fuse = new Fuse(data, { keys: ['text'], threshold: 0.35, ignoreLocation: true });
         });
 
     function loadFullDoc(docName) {
         document.getElementById('docFilter').value = docName;
         document.getElementById('search').value = ""; 
         doSearch();
+        
+        // Mark sidebar active
+        document.querySelectorAll('.doc-link').forEach(el => el.classList.remove('active'));
+        event.target.classList.add('active');
     }
 
     function doSearch() {
@@ -97,7 +230,10 @@
         const docName = document.getElementById('docFilter').value;
         const container = document.getElementById('results');
 
-        if (!query && docName === "ALL") { container.innerHTML = ''; return; }
+        if (!query && docName === "ALL") { 
+            container.innerHTML = '<div style="color:gray; text-align:center; margin-top:100px;">Select a document or search above.</div>'; 
+            return; 
+        }
 
         let filtered = fullData;
         if (docName !== "ALL") {
@@ -106,18 +242,18 @@
 
         let results = [];
         if (query === "") {
-            results = filtered.slice(0, 20); // Show first 20 if no query
+            results = filtered;
         } else if (!isNaN(query)) {
             results = filtered.filter(item => item.text.startsWith(query + ".") || item.text.startsWith(query + " "));
         } else {
-            const tempFuse = new Fuse(filtered, { keys: ['text'], threshold: 0.4 });
+            const tempFuse = new Fuse(filtered, { keys: ['text'], threshold: 0.35 });
             results = tempFuse.search(query).map(r => r.item);
         }
 
         render(results, query);
     }
 
-    function render(items, highlightTerm) {
+    function render(items, term) {
         const container = document.getElementById('results');
         if (items.length === 0) {
             container.innerHTML = '<p style="text-align:center; color:gray;">No results found.</p>';
@@ -126,23 +262,24 @@
 
         container.innerHTML = items.map(item => {
             let bodyText = item.text;
-            // Enhanced word highlighting logic
-            if (highlightTerm && isNaN(highlightTerm)) {
-                const regex = new RegExp(`(${highlightTerm})`, 'gi');
+            if (term && isNaN(term)) {
+                const regex = new RegExp(`(${term})`, 'gi');
                 bodyText = bodyText.replace(regex, '<mark>$1</mark>');
             }
             
             return `
-                <div class="result-card">
-                    <div class="doc-header">${item.doc}</div>
-                    <div class="paragraph-content">${bodyText}</div>
+                <div class="result-item">
+                    <span class="canon-label">${item.doc}</span>
+                    <div class="paragraph-text">${bodyText}</div>
                 </div>
             `;
         }).join('');
     }
 
     function toggleTheme() {
-        document.body.hasAttribute('data-theme') ? document.body.removeAttribute('data-theme') : document.body.setAttribute('data-theme', 'dark');
+        document.body.hasAttribute('data-theme') ? 
+        document.body.removeAttribute('data-theme') : 
+        document.body.setAttribute('data-theme', 'dark');
     }
 </script>
 </body>
