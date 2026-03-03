@@ -7,29 +7,31 @@
     <script src="https://cdn.jsdelivr.net/npm/fuse.js/dist/fuse.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
-        :root { --bg: #121212; --text: #e0e0e0; --sidebar: #1e1e1e; --primary: #4da3ff; --border: #333; --highlight: #443e00; }
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; display: flex; height: 100vh; background: var(--bg); color: var(--text); overflow: hidden; }
-        aside { width: 300px; background: var(--sidebar); border-right: 1px solid var(--border); display: flex; flex-direction: column; padding: 20px; overflow-y: auto; }
-        .sidebar-header { font-weight: bold; font-size: 1.2rem; color: var(--primary); margin-bottom: 25px; text-align: center; border-bottom: 2px solid var(--border); padding-bottom: 10px; }
-        .doc-link { padding: 10px 15px; font-size: 0.9rem; color: #bbb; text-decoration: none; border-radius: 6px; cursor: pointer; margin-bottom: 4px; transition: 0.3s; }
-        .doc-link:hover { background: #333; color: white; }
-        .doc-link.active { background: var(--primary); color: white; }
-        main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
-        .toolbar { padding: 15px 30px; border-bottom: 1px solid var(--border); background: var(--bg); display: flex; gap: 12px; align-items: center; }
-        .search-group { display: flex; flex: 1; max-width: 800px; border: 1px solid var(--border); border-radius: 6px; overflow: hidden; background: #252526; }
-        .doc-select { border: none; background: transparent; padding: 10px; color: var(--text); font-size: 0.9rem; border-right: 1px solid var(--border); outline: none; width: 220px; cursor: pointer; }
-        .search-box { flex: 1; border: none; padding: 12px 18px; font-size: 1rem; background: transparent; color: var(--text); outline: none; }
-        .btn { background: var(--primary); color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-size: 0.9rem; font-weight: 500; }
+        :root { --bg: #0f111a; --text: #e1e1e6; --sidebar: #191b28; --primary: #58a6ff; --border: #30363d; --highlight: #443e00; }
+        body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; margin: 0; display: flex; height: 100vh; background: var(--bg); color: var(--text); }
+        aside { width: 320px; background: var(--sidebar); border-right: 1px solid var(--border); display: flex; flex-direction: column; padding: 20px; overflow-y: auto; }
+        .sidebar-header { font-weight: 700; font-size: 1.3rem; color: var(--primary); margin-bottom: 25px; text-align: center; border-bottom: 2px solid var(--border); padding-bottom: 12px; }
+        .doc-link { padding: 10px 15px; font-size: 0.9rem; color: #a1a1aa; border-radius: 8px; cursor: pointer; margin-bottom: 6px; transition: all 0.2s; border: 1px solid transparent; }
+        .doc-link:hover { background: #21262d; color: white; border-color: #30363d; }
+        .doc-link.active { background: #238636; color: white; }
+        main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+        .toolbar { padding: 15px 40px; border-bottom: 1px solid var(--border); background: var(--bg); display: flex; gap: 15px; align-items: center; z-index: 10; }
+        .search-group { display: flex; flex: 1; max-width: 900px; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; background: #0d1117; }
+        .doc-select { border: none; background: #21262d; padding: 12px; color: var(--text); font-size: 0.9rem; border-right: 1px solid var(--border); outline: none; width: 240px; }
+        .search-box { flex: 1; border: none; padding: 12px 20px; font-size: 1rem; background: transparent; color: var(--text); outline: none; }
+        .btn { background: #238636; color: white; border: none; padding: 10px 24px; border-radius: 8px; cursor: pointer; font-size: 0.9rem; font-weight: 600; }
         .content-area { flex: 1; overflow-y: auto; padding: 40px 10%; scroll-behavior: smooth; }
-        .result-card { margin-bottom: 50px; line-height: 1.8; padding: 25px; background: #1e1e1e; border-radius: 12px; border: 1px solid var(--border); }
-        .meta-tag { font-weight: bold; color: var(--primary); margin-bottom: 15px; display: block; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; }
-        .para-content { font-family: 'Georgia', serif; font-size: 1.2rem; text-align: justify; white-space: pre-wrap; margin-bottom: 20px; }
-        .actions { display: flex; gap: 10px; flex-wrap: wrap; border-top: 1px solid var(--border); padding-top: 20px; }
-        .action-btn { background: #2d2d2d; border: 1px solid var(--border); color: #ccc; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-size: 0.85rem; transition: 0.2s; }
-        .action-btn:hover { background: var(--primary); color: white; border-color: var(--primary); }
-        .copy-special { border-color: #4caf50; color: #4caf50; }
-        .copy-special:hover { background: #4caf50; }
-        mark { background: var(--highlight); color: #fff; padding: 2px 0; border-radius: 2px; }
+        .result-card { margin-bottom: 45px; line-height: 1.8; padding: 30px; background: #161b22; border-radius: 12px; border: 1px solid var(--border); box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
+        .official-title { font-weight: 800; color: var(--primary); margin-bottom: 15px; display: block; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1.2px; }
+        .para-text { font-family: 'Georgia', serif; font-size: 1.25rem; text-align: justify; white-space: pre-wrap; margin-bottom: 25px; color: #d1d5db; }
+        .actions { display: flex; gap: 12px; flex-wrap: wrap; border-top: 1px solid var(--border); padding-top: 20px; }
+        .action-btn { background: #21262d; border: 1px solid var(--border); color: #c9d1d9; padding: 10px 18px; border-radius: 6px; cursor: pointer; font-size: 0.85rem; font-weight: 500; }
+        .action-btn:hover { background: #30363d; color: white; }
+        .btn-cite { border-color: #3fb950; color: #3fb950; }
+        .btn-cite:hover { background: #238636; color: white; }
+        .btn-pdf { border-color: #f85149; color: #f85149; }
+        .btn-pdf:hover { background: #da3633; color: white; }
+        mark { background: var(--highlight); color: #fff; padding: 2px 0; border-radius: 2px; font-weight: 600; }
     </style>
 </head>
 <body>
@@ -42,116 +44,115 @@
 <main>
     <div class="toolbar">
         <div class="search-group">
-            <select id="docFilter" class="doc-select" onchange="doSearch()">
+            <select id="docFilter" class="doc-select" onchange="applySearchAndFilter()">
                 <option value="ALL">All Documents</option>
             </select>
-            <input type="text" id="searchInput" class="search-box" placeholder="Search keywords or paragraph #..." oninput="doSearch()">
+            <input type="text" id="searchInput" class="search-box" placeholder="Search keyword or paragraph number (e.g. 15)..." oninput="applySearchAndFilter()">
         </div>
-        <button class="btn" onclick="resetUI()">Reset</button>
+        <button class="btn" onclick="resetSearch()">Reset View</button>
     </div>
     <div class="content-area" id="results"></div>
 </main>
 
 <script>
-    let rawData = [];
+    let masterData = [];
     let fuse;
     const { jsPDF } = window.jspdf;
 
-    // Official DBCS Metadata Registry
+    // OFFICIAL DBCS METADATA FOR CITATIONS AND PDF HEADERS
     const vaticanMeta = {
-        "Dei Verbum": { abbr: "DV", date: "18 November 1965", officialTitle: "Dogmatic Constitution on Divine Revelation" },
-        "Lumen Gentium": { abbr: "LG", date: "21 November 1964", officialTitle: "Dogmatic Constitution on the Church" },
-        "Sacrosanctum Concilium": { abbr: "SC", date: "4 December 1963", officialTitle: "Constitution on the Sacred Liturgy" },
-        "Gaudium et Spes": { abbr: "GS", date: "7 December 1965", officialTitle: "Pastoral Constitution on the Church in the Modern World" },
-        "Unitatis Redintegratio": { abbr: "UR", date: "21 November 1964", officialTitle: "Decree on Ecumenism" },
-        "Orientalium Ecclesiarum": { abbr: "OE", date: "21 November 1964", officialTitle: "Decree on the Catholic Churches of the Eastern Rite" },
-        "Ad Gentes": { abbr: "AG", date: "7 December 1965", officialTitle: "Decree on the Mission Activity of the Church" },
-        "Presbyterorum Ordinis": { abbr: "PO", date: "7 December 1965", officialTitle: "Decree on the Ministry and Life of Priests" },
-        "Apostolicam Actuositatem": { abbr: "AA", date: "18 November 1965", officialTitle: "Decree on the Apostolate of the Laity" },
-        "Optatam Totius": { abbr: "OT", date: "28 October 1965", officialTitle: "Decree on Priestly Training" },
-        "Perfectae Caritatis": { abbr: "PC", date: "28 October 1965", officialTitle: "Decree on the Adaptation and Renewal of Religious Life" },
-        "Christus Dominus": { abbr: "CD", date: "28 October 1965", officialTitle: "Decree Concerning the Pastoral Office of Bishops in the Church" },
-        "Inter Mirifica": { abbr: "IM", date: "4 December 1963", officialTitle: "Decree on the Media of Social Communications" },
-        "Nostra Aetate": { abbr: "NA", date: "28 October 1965", officialTitle: "Declaration on the Relation of the Church to Non-Christian Religions" },
-        "Dignitatis Humanae": { abbr: "DH", date: "7 December 1965", officialTitle: "Declaration on Religious Freedom" },
-        "Gravissimum Educationis": { abbr: "GE", date: "28 October 1965", officialTitle: "Declaration on Christian Education" }
+        "Dei Verbum": { abbr: "DV", date: "18 November 1965", title: "Dogmatic Constitution on Divine Revelation" },
+        "Lumen Gentium": { abbr: "LG", date: "21 November 1964", title: "Dogmatic Constitution on the Church" },
+        "Sacrosanctum Concilium": { abbr: "SC", date: "4 December 1963", title: "Constitution on the Sacred Liturgy" },
+        "Gaudium et Spes": { abbr: "GS", date: "7 December 1965", title: "Pastoral Constitution on the Church in the Modern World" },
+        "Unitatis Redintegratio": { abbr: "UR", date: "21 November 1964", title: "Decree on Ecumenism" },
+        "Orientalium Ecclesiarum": { abbr: "OE", date: "21 November 1964", title: "Decree on the Catholic Churches of the Eastern Rite" },
+        "Ad Gentes": { abbr: "AG", date: "7 December 1965", title: "Decree on the Mission Activity of the Church" },
+        "Presbyterorum Ordinis": { abbr: "PO", date: "7 December 1965", title: "Decree on the Ministry and Life of Priests" },
+        "Apostolicam Actuositatem": { abbr: "AA", date: "18 November 1965", title: "Decree on the Apostolate of the Laity" },
+        "Optatam Totius": { abbr: "OT", date: "28 October 1965", title: "Decree on Priestly Training" },
+        "Perfectae Caritatis": { abbr: "PC", date: "28 October 1965", title: "Decree on the Adaptation and Renewal of Religious Life" },
+        "Christus Dominus": { abbr: "CD", date: "28 October 1965", title: "Decree Concerning the Pastoral Office of Bishops in the Church" },
+        "Inter Mirifica": { abbr: "IM", date: "4 December 1963", title: "Decree on the Media of Social Communications" },
+        "Nostra Aetate": { abbr: "NA", date: "28 October 1965", title: "Declaration on the Relation of the Church to Non-Christian Religions" },
+        "Dignitatis Humanae": { abbr: "DH", date: "7 December 1965", title: "Declaration on Religious Freedom" },
+        "Gravissimum Educationis": { abbr: "GE", date: "28 October 1965", title: "Declaration on Christian Education" }
     };
 
     fetch('vatican2.json')
         .then(res => res.json())
         .then(data => {
-            rawData = data.map((item, idx) => ({ ...item, globalIdx: idx }));
+            masterData = data.map((item, index) => ({ ...item, globalId: index }));
             const uniqueDocs = [...new Set(data.map(d => d.doc))].sort();
-            
-            const list = document.getElementById('doc-list');
+            const sidebar = document.getElementById('doc-list');
             const select = document.getElementById('docFilter');
-            
+
             uniqueDocs.forEach(name => {
-                list.innerHTML += `<div class="doc-link" data-name="${name}" onclick="filterByDoc('${name}')">${name}</div>`;
+                sidebar.innerHTML += `<div class="doc-link" onclick="selectDoc('${name}')">${name}</div>`;
                 select.innerHTML += `<option value="${name}">${name}</option>`;
             });
 
-            fuse = new Fuse(rawData, { keys: ['text'], threshold: 0.35 });
-            render(rawData.slice(0, 15), "");
+            fuse = new Fuse(masterData, { keys: ['text'], threshold: 0.3 });
+            render(masterData.slice(0, 10), "");
         });
 
-    function filterByDoc(name) {
+    function selectDoc(name) {
         document.getElementById('docFilter').value = name;
         document.getElementById('searchInput').value = "";
-        doSearch();
+        applySearchAndFilter();
     }
 
-    function resetUI() {
+    function resetSearch() {
         document.getElementById('searchInput').value = "";
         document.getElementById('docFilter').value = "ALL";
-        doSearch();
+        applySearchAndFilter();
     }
 
-    function doSearch() {
+    function applySearchAndFilter() {
         const query = document.getElementById('searchInput').value.trim();
-        const filter = document.getElementById('docFilter').value;
+        const selectedDoc = document.getElementById('docFilter').value;
         
-        let pool = filter === "ALL" ? rawData : rawData.filter(d => d.doc === filter);
-        
-        if (!query) {
-            render(pool.slice(0, 15), "");
-            return;
-        }
+        // 1. Filter by Document first
+        let pool = selectedDoc === "ALL" ? masterData : masterData.filter(d => d.doc === selectedDoc);
 
+        // 2. Apply Search logic
         let results;
-        if (!isNaN(query)) {
-            // Search by Paragraph Number
-            results = pool.filter(p => p.text.startsWith(query + "."));
+        if (!query) {
+            results = pool.slice(0, 20);
+        } else if (!isNaN(query)) {
+            // Numeric Search for Paragraph Number
+            results = pool.filter(p => p.text.startsWith(query + ".") || p.text.startsWith(query + " "));
         } else {
-            // Fuzzy Search for text
+            // Fuzzy Text Search
             results = fuse.search(query).map(r => r.item);
-            if (filter !== "ALL") results = results.filter(r => r.doc === filter);
+            if (selectedDoc !== "ALL") {
+                results = results.filter(r => r.doc === selectedDoc);
+            }
         }
-        render(results.slice(0, 30), query);
+        render(results.slice(0, 50), query);
     }
 
     function render(items, term) {
         const container = document.getElementById('results');
-        container.innerHTML = items.length ? "" : '<div style="text-align:center; padding:50px; opacity:0.5;">No matches found.</div>';
+        container.innerHTML = items.length ? "" : '<div style="text-align:center; padding:100px; opacity:0.5;">No results found for your search.</div>';
         
         items.forEach(item => {
-            const meta = vaticanMeta[item.doc] || { abbr: item.doc, date: "", officialTitle: item.doc };
-            let highlightedText = item.text;
+            const meta = vaticanMeta[item.doc] || { title: item.doc, abbr: "n/a", date: "" };
+            let bodyText = item.text;
             if (term && isNaN(term)) {
-                const regex = new RegExp(`(${term})`, 'gi');
-                highlightedText = highlightedText.replace(regex, '<mark>$1</mark>');
+                bodyText = bodyText.replace(new RegExp(`(${term})`, 'gi'), '<mark>$1</mark>');
             }
 
             const card = document.createElement('div');
             card.className = 'result-card';
             card.innerHTML = `
-                <span class="meta-tag">${meta.officialTitle}</span>
-                <div class="para-content">${highlightedText}</div>
+                <span class="official-title">${meta.title}</span>
+                <div class="para-text">${bodyText}</div>
                 <div class="actions">
-                    <button class="action-btn" onclick="navigateParagraph(${item.globalIdx - 1})">← Previous</button>
-                    <button class="action-btn" onclick="navigateParagraph(${item.globalIdx + 1})">Next →</button>
-                    <button class="action-btn copy-special" onclick="copyCitation('${item.doc}', \`${item.text.replace(/`/g, "\\`")}\`)">🔗 Copy DBCS Citation</button>
-                    <button class="action-btn" onclick="generatePDF('${item.doc}', \`${item.text.replace(/`/g, "\\`")}\`)">📄 Download PDF</button>
+                    <button class="action-btn" onclick="jumpTo(${item.globalId - 1})">← Prev</button>
+                    <button class="action-btn" onclick="jumpTo(${item.globalId + 1})">Next →</button>
+                    <button class="action-btn btn-cite" onclick="dbcsCite('${item.doc}', \`${item.text.replace(/'/g, "\\'")}\`)">🔗 Copy DBCS Citation</button>
+                    <button class="action-btn btn-pdf" onclick="generateDBCSPDF('${item.doc}', \`${item.text.replace(/'/g, "\\'")}\`)">📄 Download Document PDF</button>
                 </div>
             `;
             container.appendChild(card);
@@ -159,49 +160,54 @@
         container.scrollTop = 0;
     }
 
-    function navigateParagraph(idx) {
-        if (idx >= 0 && idx < rawData.length) {
-            render([rawData[idx]], "");
+    function jumpTo(idx) {
+        if (idx >= 0 && idx < masterData.length) {
+            render([masterData[idx]], "");
         }
     }
 
-    // STRICT DBCS CITATION BUILDER (Manual Page 10)
-    function copyCitation(docKey, text) {
-        const meta = vaticanMeta[docKey];
-        const paraNum = text.match(/^\d+/)?.[0] || "n.a.";
+    // DBCS HOUSE STYLE CITATION BUILDER
+    function dbcsCite(docKey, text) {
+        const meta = vaticanMeta[docKey] || { title: docKey, abbr: "n/a", date: "n.d." };
+        const paraMatch = text.match(/^\d+/);
+        const paraNum = paraMatch ? paraMatch[0] : "n.a.";
         
-        // Format based on DBCS House Style Guide:
-        // Authority, Document Title (Acronym) (Date), no. X.
-        const citation = `Vatican II, ${meta.officialTitle} (${meta.abbr}) (${meta.date}), no. ${paraNum}.`;
+        // Correct DBCS Format: Authority, Document Name (Acronym) (Date), no. X.
+        const citation = `Vatican II, ${meta.title} (${meta.abbr}) (${meta.date}), no. ${paraNum}.`;
         
-        navigator.clipboard.writeText(citation).then(() => alert("Citation copied to clipboard!"));
+        navigator.clipboard.writeText(citation).then(() => {
+            alert("DBCS Citation Copied!");
+        });
     }
 
-    // FORMAL PDF EXPORT
-    function generatePDF(docKey, text) {
-        const meta = vaticanMeta[docKey];
+    // DBCS OFFICIAL PDF GENERATOR
+    function generateDBCSPDF(docKey, text) {
+        const meta = vaticanMeta[docKey] || { title: docKey, abbr: "n/a", date: "" };
         const doc = new jsPDF();
         
-        // Center Header
+        // Formal Header
         doc.setFont("times", "bold");
-        doc.setFontSize(14);
+        doc.setFontSize(13);
         doc.text("DON BOSCO CENTER OF STUDIES", 105, 20, { align: "center" });
         
-        // Official Title
+        // Official Title of the Document
         doc.setFontSize(11);
-        doc.text(meta.officialTitle.toUpperCase(), 105, 30, { align: "center" });
+        doc.text(meta.title.toUpperCase(), 105, 30, { align: "center" });
         
-        // Separator Line
+        // Separator
+        doc.setDrawColor(0);
         doc.setLineWidth(0.5);
-        doc.line(25, 35, 185, 35);
+        doc.line(20, 35, 190, 35);
         
-        // Body Content
+        // Body Text
         doc.setFont("times", "normal");
         doc.setFontSize(12);
-        const splitText = doc.splitTextToSize(text, 160);
-        doc.text(splitText, 25, 45);
+        const margin = 20;
+        const width = 170;
+        const splitText = doc.splitTextToSize(text, width);
+        doc.text(splitText, margin, 45);
         
-        doc.save(`${meta.abbr}_Excerpt.pdf`);
+        doc.save(`${meta.abbr}_Official_Excerpt.pdf`);
     }
 </script>
 </body>
