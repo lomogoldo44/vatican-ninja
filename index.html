@@ -79,7 +79,7 @@
         "Gravissimum Educationis": { abbr: "GE", date: "28 October 1965", title: "Declaration on Christian Education" }
     };
 
-// 1. FIXED MANIFEST LOADER
+    // 1. FIXED MANIFEST LOADER
     async function loadAllData() {
         try {
             const manifestResponse = await fetch('files.json');
@@ -95,16 +95,14 @@
             }
             
             masterData = masterData.map((item, index) => ({ ...item, globalId: index }));
-            
-            // Call the initialization function
             initUI();
         } catch (error) {
             console.error("Loading error:", error);
-            document.getElementById('results').innerHTML = "Error loading files. Check files.json.";
+            document.getElementById('results').innerHTML = "Error loading files. Check files.json and your console.";
         }
     }
 
-    // 2. ADD THIS MISSING FUNCTION (This builds your sidebar)
+    // 2. INITIALIZE UI (Sidebar and Search)
     function initUI() {
         const uniqueDocs = [...new Set(masterData.map(d => d.doc))].sort();
         const sidebar = document.getElementById('doc-list');
@@ -118,16 +116,12 @@
             select.innerHTML += `<option value="${name}">${name}</option>`;
         });
 
-        // Initialize Search Engine
         fuse = new Fuse(masterData, { keys: ['text'], threshold: 0.3 });
-        
-        // Show initial documents
         applySearchAndFilter(); 
     }
 
-    // Start the process
-    loadAllData();
-{
+    // 3. FIXED: ADDED THE MISSING FUNCTION HEADER HERE
+    function selectDoc(name) {
         document.getElementById('docFilter').value = name;
         document.getElementById('searchInput').value = "";
         applySearchAndFilter();
@@ -143,18 +137,14 @@
         const query = document.getElementById('searchInput').value.trim();
         const selectedDoc = document.getElementById('docFilter').value;
         
-        // 1. Filter by Document first
         let pool = selectedDoc === "ALL" ? masterData : masterData.filter(d => d.doc === selectedDoc);
 
-        // 2. Apply Search logic
         let results;
         if (!query) {
             results = pool.slice(0, 20);
-        } else if (!isNaN(query)) {
-            // Numeric Search for Paragraph Number
-            results = pool.filter(p => p.text.startsWith(query + ".") || p.text.startsWith(query + " "));
+        } else if (!isNaN(query) && query !== "") {
+            results = pool.filter(p => p.text.trim().startsWith(query + ".") || p.text.trim().startsWith(query + " "));
         } else {
-            // Fuzzy Text Search
             results = fuse.search(query).map(r => r.item);
             if (selectedDoc !== "ALL") {
                 results = results.filter(r => r.doc === selectedDoc);
@@ -182,8 +172,8 @@
                 <div class="actions">
                     <button class="action-btn" onclick="jumpTo(${item.globalId - 1})">← Prev</button>
                     <button class="action-btn" onclick="jumpTo(${item.globalId + 1})">Next →</button>
-                    <button class="action-btn btn-cite" onclick="dbcsCite('${item.doc}', \`${item.text.replace(/'/g, "\\'")}\`)">🔗 Copy DBCS Citation</button>
-                    <button class="action-btn btn-pdf" onclick="generateDBCSPDF('${item.doc}', \`${item.text.replace(/'/g, "\\'")}\`)">📄 Download Document PDF</button>
+                    <button class="action-btn btn-cite" onclick="dbcsCite('${item.doc}', \`${item.text.replace(/'/g, "\\'").replace(/"/g, '&quot;')}\`)">🔗 Copy DBCS Citation</button>
+                    <button class="action-btn btn-pdf" onclick="generateDBCSPDF('${item.doc}', \`${item.text.replace(/'/g, "\\'").replace(/"/g, '&quot;')}\`)">📄 Download Document PDF</button>
                 </div>
             `;
             container.appendChild(card);
@@ -197,13 +187,10 @@
         }
     }
 
-    // DBCS HOUSE STYLE CITATION BUILDER
     function dbcsCite(docKey, text) {
         const meta = vaticanMeta[docKey] || { title: docKey, abbr: "n/a", date: "n.d." };
         const paraMatch = text.match(/^\d+/);
         const paraNum = paraMatch ? paraMatch[0] : "n.a.";
-        
-        // Correct DBCS Format: Authority, Document Name (Acronym) (Date), no. X.
         const citation = `Vatican II, ${meta.title} (${meta.abbr}) (${meta.date}), no. ${paraNum}.`;
         
         navigator.clipboard.writeText(citation).then(() => {
@@ -211,35 +198,25 @@
         });
     }
 
-    // DBCS OFFICIAL PDF GENERATOR
     function generateDBCSPDF(docKey, text) {
         const meta = vaticanMeta[docKey] || { title: docKey, abbr: "n/a", date: "" };
         const doc = new jsPDF();
-        
-        // Formal Header
         doc.setFont("times", "bold");
         doc.setFontSize(13);
         doc.text("DON BOSCO CENTER OF STUDIES", 105, 20, { align: "center" });
-        
-        // Official Title of the Document
         doc.setFontSize(11);
         doc.text(meta.title.toUpperCase(), 105, 30, { align: "center" });
-        
-        // Separator
-        doc.setDrawColor(0);
         doc.setLineWidth(0.5);
         doc.line(20, 35, 190, 35);
-        
-        // Body Text
         doc.setFont("times", "normal");
         doc.setFontSize(12);
-        const margin = 20;
-        const width = 170;
-        const splitText = doc.splitTextToSize(text, width);
-        doc.text(splitText, margin, 45);
-        
+        const splitText = doc.splitTextToSize(text, 170);
+        doc.text(splitText, 20, 45);
         doc.save(`${meta.abbr}_Official_Excerpt.pdf`);
     }
+
+    // Start the whole thing
+    loadAllData();
 </script>
 </body>
 </html>
