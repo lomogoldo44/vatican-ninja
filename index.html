@@ -52,8 +52,6 @@
         .btn-pdf { border-color: #f85149; color: #f85149; }
         .btn-pdf:hover { background: #da3633; color: white; }
         mark { background: var(--highlight); color: #fff; padding: 2px 0; border-radius: 2px; font-weight: 600; }
-		/* Yellow is the default for 'mark'. This adds Blue for 'partial' matches */
-        mark.partial { background: #004a77; color: #fff; border-radius: 2px; }
     </style>
 </head>
 <body>
@@ -154,12 +152,13 @@ function initUI() {
             select.innerHTML += `<option value="${name}">${name}</option>`;
         });
 
-        // Search settings for better verb/adjective detection
+        // UPDATED: Better settings for finding verbs and adjectives
         fuse = new Fuse(masterData, { 
             keys: ['text'], 
-            threshold: 0.4, 
-            ignoreLocation: true,
-            distance: 1000 
+            threshold: 0.4,       // Makes search more flexible (0.0 is exact, 1.0 is anything)
+            ignoreLocation: true, // Finds words anywhere in the paragraph, not just the start
+            useExtendedSearch: true,
+            distance: 1000        // Helps find words even in very long paragraphs
         });
         
         applySearchAndFilter(); 
@@ -188,40 +187,28 @@ function initUI() {
         render(results, query);
     }
 
-function render(items, term) {
+    function render(items, term) {
         const container = document.getElementById('results');
         container.innerHTML = items.length ? "" : '<div style="text-align:center; padding:100px; opacity:0.5;">No results found.</div>';
         
         items.forEach(item => {
             const meta = vaticanMeta[item.doc] || { title: item.doc, abbr: "n/a", date: "" };
-            let displayBody = beautifyText(item);
             
-            // --- NEW TWO-COLOR HIGHLIGHTER ---
+            // Apply the Beautifier here!
+            let displayBody = beautifyText(item.text);
+            
             if (term && isNaN(term)) {
-                const keywords = term.split(/\s+/).filter(word => word.length > 2);
-                
-                keywords.forEach(word => {
-                    // 1. Highlight EXACT matches in Yellow (default mark)
-                    const exactRegex = new RegExp(`(${word})`, 'gi');
-                    displayBody = displayBody.replace(exactRegex, '<mark>$1</mark>');
-
-                    // 2. Highlight PARTIAL/ROOT matches in Blue
-                    const root = word.substring(0, 4); 
-                    const partialRegex = new RegExp(`(${root}[a-z]*)`, 'gi');
-                    
-                    displayBody = displayBody.replace(partialRegex, (match) => {
-                        // Only turn Blue if it hasn't already been turned Yellow
-                        return match.includes('mark') ? match : `<mark class="partial">${match}</mark>`;
-                    });
-                });
+                displayBody = displayBody.replace(new RegExp(`(${term})`, 'gi'), '<mark>$1</mark>');
             }
 
             const card = document.createElement('div');
             card.className = 'result-card';
+            
+            // Clean text for buttons
             const rawText = item.text.replace(/'/g, "\\'").replace(/"/g, '&quot;');
 
             card.innerHTML = `
-                <span class="official-title">${meta.type} <i>${meta.latin}</i></span>
+	<span class="official-title">${meta.type} <i>${meta.latin}</i></span>
                 <div class="para-text">${displayBody}</div>
                 <div class="actions">
                     <button class="action-btn" onclick="jumpTo(${item.globalId - 1})">← Prev</button>
@@ -275,6 +262,4 @@ function dbcsCite(docKey, text) {
 </script>
 </body>
 </html>-
-
-
 
