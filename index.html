@@ -139,7 +139,7 @@ async function loadAllData() {
         }
     }
 
-    function initUI() {
+function initUI() {
         const uniqueDocs = [...new Set(masterData.map(d => d.doc))].sort();
         const sidebar = document.getElementById('doc-list');
         const select = document.getElementById('docFilter');
@@ -152,7 +152,15 @@ async function loadAllData() {
             select.innerHTML += `<option value="${name}">${name}</option>`;
         });
 
-        fuse = new Fuse(masterData, { keys: ['text'], threshold: 0.3 });
+        // UPDATED: Better settings for finding verbs and adjectives
+        fuse = new Fuse(masterData, { 
+            keys: ['text'], 
+            threshold: 0.4,       // Makes search more flexible (0.0 is exact, 1.0 is anything)
+            ignoreLocation: true, // Finds words anywhere in the paragraph, not just the start
+            useExtendedSearch: true,
+            distance: 1000        // Helps find words even in very long paragraphs
+        });
+        
         applySearchAndFilter(); 
     }
 
@@ -254,4 +262,5 @@ function dbcsCite(docKey, text) {
 </script>
 </body>
 </html>-
+
 
