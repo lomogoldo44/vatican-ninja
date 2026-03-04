@@ -219,16 +219,19 @@ async function loadAllData() {
     }
 
 function dbcsCite(docKey, text) {
-    const meta = vaticanMeta[docKey];
-    const paraMatch = text.match(/^\d+/);
-    const paraNum = paraMatch ? paraMatch[0] : "n.a.";
-    
-    // Pattern: Vatican II, Type Latin Name (Abbr) (Date), no. Num.
-    const citation = `Vatican II, ${meta.type} ${meta.latin} (${meta.abbr}) (${meta.date}), no. ${paraNum}.`;
-    
-    navigator.clipboard.writeText(citation).then(() => {
-        alert("DBCS Citation Copied!");
-    }
+        const meta = vaticanMeta[docKey];
+        const paraMatch = text.match(/^\d+/);
+        const paraNum = paraMatch ? paraMatch[0] : "n.a.";
+        
+        // Pattern: Vatican II, Type Latin Name (Abbr) (Date), no. Num.
+        const citation = `Vatican II, ${meta.type} ${meta.latin} (${meta.abbr}) (${meta.date}), no. ${paraNum}.`;
+        
+        navigator.clipboard.writeText(citation).then(() => {
+            alert("DBCS Citation Copied!");
+        }).catch(err => {
+            console.error('Copy failed', err);
+        });
+    } // <--- Ensure this bracket is here!
 
     function generateDBCSPDF(docKey, text) {
         const meta = vaticanMeta[docKey] || { title: docKey, abbr: "n/a", date: "" };
