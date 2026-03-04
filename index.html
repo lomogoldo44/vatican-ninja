@@ -11,6 +11,27 @@
         body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; margin: 0; display: flex; height: 100vh; background: var(--bg); color: var(--text); }
        aside { width: 320px; ... }
 
+		/* Style for the footnote superscript */
+        .footnote {
+            color: var(--primary);
+            cursor: pointer;
+            font-weight: bold;
+            padding: 0 2px;
+            transition: all 0.2s;
+        }
+
+        .footnote:hover {
+            text-shadow: 0 0 8px var(--primary);
+            text-decoration: underline;
+        }
+
+        /* Style for the "Reference" text (cf. etc) */
+        .reference-text {
+            opacity: 0.7;
+            font-style: italic;
+            font-size: 0.95em;
+        }
+		
 /* 1. Add this new block */
 .sidebar-logo {
     width: 80px;
@@ -104,10 +125,12 @@
 
     // --- THE BEAUTIFIER LOGIC ---
     // This solves the "cf" and notes problem automatically
-    function beautifyText(text) {
+function beautifyText(text) {
         return text
-            // 1. Turn (1), (2) into tiny superscripts
-            .replace(/\((\d+)\)/g, '<sup class="footnote">[$1]</sup>')
+            // 1. Turn (1), (2) into interactive superscripts with a click event
+            .replace(/\((\d+)\)/g, (match, num) => {
+                return `<sup class="footnote" onclick="showFootnote(${num})" title="Click to view source"> [${num}] </sup>`;
+            })
             // 2. Turn (cf. ...) and (see ...) into dimmed italic text
             .replace(/(\((?:cf\.|see).*?\))/gi, '<span class="reference-text">$1</span>');
     }
@@ -250,9 +273,48 @@ function dbcsCite(docKey, text) {
         doc.save(`${meta.abbr}_Excerpt.pdf`);
     }
 
+// This creates the "Toast" notification when a footnote is clicked
+    function showFootnote(num) {
+        // Remove any existing toast first
+        const oldToast = document.querySelector('.footnote-toast');
+        if (oldToast) oldToast.remove();
+
+        const toast = document.createElement('div');
+        toast.className = 'footnote-toast';
+        toast.style = `
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: #1c2128;
+            color: #58a6ff;
+            padding: 16px 24px;
+            border: 1px solid #58a6ff;
+            border-radius: 8px;
+            z-index: 1000;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+            font-family: sans-serif;
+            animation: slideUp 0.3s ease-out;
+        `;
+        
+        toast.innerHTML = `
+            <div style="font-weight: bold; margin-bottom: 5px;">Footnote Source</div>
+            <div style="color: #adbac7; font-size: 0.9rem;">Consult the official <i>DBCS Citation Manual</i> for the full text of reference [${num}].</div>
+        `;
+        
+        document.body.appendChild(toast);
+
+        // Automatically hide it after 4 seconds
+        setTimeout(() => {
+            toast.style.opacity = '0';
+            toast.style.transition = 'opacity 0.5s';
+            setTimeout(() => toast.remove(), 500);
+        }, 4000);
+    }
+	
     loadAllData();
 </script>
 </body>
 </html>-
+
 
 
