@@ -112,19 +112,24 @@
             .replace(/(\((?:cf\.|see).*?\))/gi, '<span class="reference-text">$1</span>');
     }
 
-    async function loadAllData() {
+async function loadAllData() {
         try {
             const manifestResponse = await fetch('files.json');
             if (!manifestResponse.ok) throw new Error("files.json not found");
             const filesToLoad = await manifestResponse.json(); 
             
-            for (const file of filesToLoad) {
-                const response = await fetch(file);
-                if (response.ok) {
-                    const data = await response.json();
-                    masterData = [...masterData, ...data]; 
-                }
-            }
+            // STEP 1: Parallel Loading
+            const dataPromises = filesToLoad.map(file => 
+                fetch(file).then(res => {
+                    if (!res.ok) throw new Error(`Failed to load ${file}`);
+                    return res.json();
+                })
+            );
+
+            const allResults = await Promise.all(dataPromises);
+            
+            // STEP 2: Flattening/Merging
+            masterData = allResults.flat();
             
             masterData = masterData.map((item, index) => ({ ...item, globalId: index }));
             initUI();
