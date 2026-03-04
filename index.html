@@ -84,22 +84,22 @@
     const { jsPDF } = window.jspdf;
 
     const vaticanMeta = {
-        "Dei Verbum": { abbr: "DV", date: "18 November 1965", title: "Dei Verbum: Dogmatic Constitution on Divine Revelation" },
-        "Lumen Gentium": { abbr: "LG", date: "21 November 1964", title: "Lumen Gentium: Dogmatic Constitution on the Church" },
-        "Sacrosanctum Concilium": { abbr: "SC", date: "4 December 1963", title: "Sacrosanctum Concilium: Constitution on the Sacred Liturgy" },
-        "Gaudium et Spes": { abbr: "GS", date: "7 December 1965", title: "Gaudium et Spes: Pastoral Constitution on the Church in the Modern World" },
-        "Unitatis Redintegratio": { abbr: "UR", date: "21 November 1964", title: "Unitatis Redintegratio: Decree on Ecumenism" },
-        "Orientalium Ecclesiarum": { abbr: "OE", date: "21 November 1964", title: "Orientalium Ecclesiarum: Decree on the Catholic Churches of the Eastern Rite" },
-        "Ad Gentes": { abbr: "AG", date: "7 December 1965", title: "Ad Gentes: Decree on the Mission Activity of the Church" },
-        "Presbyterorum Ordinis": { abbr: "PO", date: "7 December 1965", title: "Presbyterorum Ordinis: Decree on the Ministry and Life of Priests" },
-        "Apostolicam Actuositatem": { abbr: "AA", date: "18 November 1965", title: "Apostolicam Actuositatem: Decree on the Apostolate of the Laity" },
-        "Optatam Totius": { abbr: "OT", date: "28 October 1965", title: "Optatam Totius: Decree on Priestly Training" },
-        "Perfectae Caritatis": { abbr: "PC", date: "28 October 1965", title: "Perfectae Caritatis: Decree on the Adaptation and Renewal of Religious Life" },
-        "Christus Dominus": { abbr: "CD", date: "28 October 1965", title: "Christus Dominus: Decree Concerning the Pastoral Office of Bishops" },
-        "Inter Mirifica": { abbr: "IM", date: "4 December 1963", title: "Inter Mirifica: Decree on Social Communications" },
-        "Nostra Aetate": { abbr: "NA", date: "28 October 1965", title: "Nostra Aetate: Declaration on Non-Christian Religions" },
-        "Dignitatis Humanae": { abbr: "DH", date: "7 December 1965", title: "Dignitatis Humanae: Declaration on Religious Freedom" },
-        "Gravissimum Educationis": { abbr: "GE", date: "28 October 1965", title: "Gravissimum Educationis: Declaration on Christian Education" }
+"Dei Verbum": { abbr: "DV", type: "Dogmatic Constitution", latin: "Dei Verbum", date: "18 November 1965" },
+    "Lumen Gentium": { abbr: "LG", type: "Dogmatic Constitution", latin: "Lumen Gentium", date: "21 November 1964" },
+    "Sacrosanctum Concilium": { abbr: "SC", type: "Constitution", latin: "Sacrosanctum Concilium", date: "4 December 1963" },
+    "Gaudium et Spes": { abbr: "GS", type: "Pastoral Constitution", latin: "Gaudium et Spes", date: "7 December 1965" },
+    "Unitatis Redintegratio": { abbr: "UR", type: "Decree", latin: "Unitatis Redintegratio", date: "21 November 1964" },
+    "Orientalium Ecclesiarum": { abbr: "OE", type: "Decree", latin: "Orientalium Ecclesiarum", date: "21 November 1964" },
+    "Ad Gentes": { abbr: "AG", type: "Decree", latin: "Ad Gentes", date: "7 December 1965" },
+    "Presbyterorum Ordinis": { abbr: "PO", type: "Decree", latin: "Presbyterorum Ordinis", date: "7 December 1965" },
+    "Apostolicam Actuositatem": { abbr: "AA", type: "Decree", latin: "Apostolicam Actuositatem", date: "18 November 1965" },
+    "Optatam Totius": { abbr: "OT", type: "Decree", latin: "Optatam Totius", date: "28 October 1965" },
+    "Perfectae Caritatis": { abbr: "PC", type: "Decree", latin: "Perfectae Caritatis", date: "28 October 1965" },
+    "Christus Dominus": { abbr: "CD", type: "Decree", latin: "Christus Dominus", date: "28 October 1965" },
+    "Inter Mirifica": { abbr: "IM", type: "Decree", latin: "Inter Mirifica", date: "4 December 1963" },
+    "Nostra Aetate": { abbr: "NA", type: "Declaration", latin: "Nostra Aetate", date: "28 October 1965" },
+    "Dignitatis Humanae": { abbr: "DH", type: "Declaration", latin: "Dignitatis Humanae", date: "7 December 1965" },
+    "Gravissimum Educationis": { abbr: "GE", type: "Declaration", latin: "Gravissimum Educationis", date: "28 October 1965" }
     };
 
     // --- THE BEAUTIFIER LOGIC ---
@@ -200,7 +200,7 @@ async function loadAllData() {
             const rawText = item.text.replace(/'/g, "\\'").replace(/"/g, '&quot;');
 
             card.innerHTML = `
-                <span class="official-title">${meta.title}</span>
+	<span class="official-title">${meta.type} <i>${meta.latin}</i></span>
                 <div class="para-text">${displayBody}</div>
                 <div class="actions">
                     <button class="action-btn" onclick="jumpTo(${item.globalId - 1})">← Prev</button>
@@ -218,12 +218,16 @@ async function loadAllData() {
         if (idx >= 0 && idx < masterData.length) render([masterData[idx]], "");
     }
 
-    function dbcsCite(docKey, text) {
-        const meta = vaticanMeta[docKey] || { title: docKey, abbr: "n/a", date: "n.d." };
-        const paraMatch = text.match(/^\d+/);
-        const paraNum = paraMatch ? paraMatch[0] : "n.a.";
-        const citation = `Vatican II, ${meta.title} (${meta.abbr}) (${meta.date}), no. ${paraNum}.`;
-        navigator.clipboard.writeText(citation).then(() => alert("DBCS Citation Copied!"));
+function dbcsCite(docKey, text) {
+    const meta = vaticanMeta[docKey];
+    const paraMatch = text.match(/^\d+/);
+    const paraNum = paraMatch ? paraMatch[0] : "n.a.";
+    
+    // Pattern: Vatican II, Type Latin Name (Abbr) (Date), no. Num.
+    const citation = `Vatican II, ${meta.type} ${meta.latin} (${meta.abbr}) (${meta.date}), no. ${paraNum}.`;
+    
+    navigator.clipboard.writeText(citation).then(() => {
+        alert("DBCS Citation Copied!");
     }
 
     function generateDBCSPDF(docKey, text) {
