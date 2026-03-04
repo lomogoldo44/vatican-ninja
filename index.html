@@ -241,25 +241,36 @@ function dbcsCite(docKey, text) {
         });
     } // <--- Ensure this bracket is here!
 
-    function generateDBCSPDF(docKey, text) {
-        const meta = vaticanMeta[docKey] || { title: docKey, abbr: "n/a", date: "" };
-        const doc = new jsPDF();
+function generateDBCSPDF(docKey, text) {
+        const meta = vaticanMeta[docKey] || { latin: docKey, abbr: "n/a", date: "", type: "" };
+        
+        // This line initializes the PDF library correctly
+        const doc = new jspdf.jsPDF(); 
+        
         doc.setFont("times", "bold");
-        doc.setFontSize(13);
+        doc.setFontSize(14);
         doc.text("DON BOSCO CENTER OF STUDIES", 105, 20, { align: "center" });
+        
         doc.setFontSize(11);
-        doc.text(meta.title.toUpperCase(), 105, 30, { align: "center" });
+        doc.text(`${meta.type.toUpperCase()} ${meta.latin.toUpperCase()}`, 105, 30, { align: "center" });
+        
         doc.setLineWidth(0.5);
         doc.line(20, 35, 190, 35);
+        
         doc.setFont("times", "normal");
         doc.setFontSize(12);
+        
+        // This splits the long paragraph into lines that fit on a page
         const splitText = doc.splitTextToSize(text, 170);
         doc.text(splitText, 20, 45);
-        doc.save(`${meta.abbr}_Excerpt.pdf`);
+        
+        // This triggers the download
+        doc.save(`${meta.abbr}_Paragraph_Excerpt.pdf`);
     }
 
     loadAllData();
 </script>
 </body>
 </html>-
+
 
